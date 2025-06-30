@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Watering Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide-react@0.292.0/dist/lucide-react.js"></script>
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+        }
+        .card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+            transition: all 0.3s ease-in-out;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #3b82f6; /* Blue-500 */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb; /* Blue-600 */
+        }
+        .btn-secondary {
+            background-color: #e5e7eb; /* Gray-200 */
+            color: #374151; /* Gray-700 */
+        }
+         .btn-secondary:hover {
+            background-color: #d1d5db; /* Gray-300 */
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        /* Style for file input */
+        #take-photo-button {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+
+    <div class="min-h-screen p-4 sm:p-6 lg:p-8">
+        <div class="max-w-5xl mx-auto">
+            <!-- Header -->
+            <header class="mb-8">
+                <h1 class="text-4xl font-bold text-gray-900">Smart Watering Dashboard</h1>
+                <p class="text-lg text-gray-500 mt-1">Soil Moisture Analysis & Control</p>
+            </header>
+
+            <!-- Main Content Grid -->
+            <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- Left Column: Prediction and Control -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- Status Card -->
+                    <div id="status-card" class="card p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div class="flex items-center gap-4">
+                            <div id="status-icon-bg" class="w-16 h-16 rounded-full flex items-center justify-center bg-gray-200 transition-colors duration-300">
+                                <!-- Icon will be injected by JS -->
+                               <div id="status-icon-container">
+                                    <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16l2.879-2.879a3 3 0 014.242 0L20 18h-4.793a2 2 0 00-1.414.586l-1.06 1.061A2 2 0 019.268 20H8v-4z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v-4.793a2 2 0 01.586-1.414l1.06-1.061a2 2 0 000-2.828L4 5.207V4h4.793a2 2 0 011.414.586l1.061 1.061a2 2 0 002.828 0l1.061-1.061A2 2 0 0116.732 4H20v1.207l-2.121 2.121a2 2 0 000 2.828l1.061 1.061a2 2 0 01.586 1.414V16h-4.793a2 2 0 00-1.414.586l-1.06 1.061a2 2 0 01-2.828 0l-1.061-1.061A2 2 0 007.268 16H4z"></path></svg>
+                               </div>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-semibold">Current Status</h2>
+                                <p id="status-text" class="text-3xl font-bold text-gray-500 transition-colors duration-300">Awaiting Image...</p>
+                                <p id="confidence-text" class="text-sm text-gray-400 mt-1"> </p>
+                            </div>
+                        </div>
+                         <div class="text-sm text-gray-500 text-center sm:text-right">
+                            <p>Last Updated:</p>
+                            <p id="last-updated" class="font-semibold">Never</p>
+                        </div>
+                    </div>
+
+                    <!-- Image Capture & Predict Card -->
+                    <div class="card p-6">
+                         <h2 class="text-xl font-semibold mb-4">1. Get Image from ESP32</h2>
+                        <div class="flex flex-col sm:flex-row items-center gap-6">
+                            <div id="image-preview-container" class="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                               <p id="image-placeholder-text" class="text-gray-400 text-center p-4">Image Preview</p>
+                               <img id="image-preview" src="" alt="Image Preview" class="hidden w-full h-full object-cover rounded-lg"/>
+                            </div>
+                            <div class="flex-1 text-center sm:text-left">
+                               <p class="text-gray-600 mb-4">Click the button to request a new photo from the ESP32 camera.</p>
+                                <button id="take-photo-button" class="btn btn-secondary mr-2">
+                                    <span id="take-photo-btn-text">Take a Photo</span>
+                                    <div id="photo-loading-spinner" class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></div>
+                                </button>
+                                <button id="predict-button" class="btn btn-primary" disabled>
+                                    <span id="predict-btn-text">Predict Moisture</span>
+                                    <div id="loading-spinner" class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                     <!-- Watering Control Card -->
+                    <div class="card p-6">
+                         <h2 class="text-xl font-semibold mb-4">2. Watering Control</h2>
+                         <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div id="watering-status-dot" class="status-dot bg-gray-400"></div>
+                                <p id="watering-status-text" class="font-semibold text-lg">System Idle</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                 <span class="text-gray-600">Auto-Watering:</span>
+                                 <button id="auto-mode-toggle" class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors bg-gray-200">
+                                    <span class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform translate-x-1"></span>
+                                 </button>
+                                <button id="manual-water-button" class="btn btn-secondary">Water Now</button>
+                            </div>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: History -->
+                <div class="lg:col-span-1">
+                    <div class="card p-6 h-full">
+                        <h2 class="text-xl font-semibold mb-4">History Log</h2>
+                        <div id="history-log" class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                           <div class="text-center text-gray-400 pt-8">
+                               <svg class="w-12 h-12 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                               <p class="mt-2">No activities yet.</p>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Element selectors
+            const statusCard = document.getElementById('status-card');
+            const statusIconContainer = document.getElementById('status-icon-container');
+            const statusIconBg = document.getElementById('status-icon-bg');
+            const statusText = document.getElementById('status-text');
+            const confidenceText = document.getElementById('confidence-text');
+            const lastUpdated = document.getElementById('last-updated');
+
+            const takePhotoButton = document.getElementById('take-photo-button');
+            const takePhotoBtnText = document.getElementById('take-photo-btn-text');
+            const photoLoadingSpinner = document.getElementById('photo-loading-spinner');
+
+            const imagePreview = document.getElementById('image-preview');
+            const imagePlaceholderText = document.getElementById('image-placeholder-text');
+            
+            const predictButton = document.getElementById('predict-button');
+            const predictBtnText = document.getElementById('predict-btn-text');
+            const loadingSpinner = document.getElementById('loading-spinner');
+
+            const wateringStatusDot = document.getElementById('watering-status-dot');
+            const wateringStatusText = document.getElementById('watering-status-text');
+            const autoModeToggle = document.getElementById('auto-mode-toggle');
+            const manualWaterButton = document.getElementById('manual-water-button');
+            
+            const historyLog = document.getElementById('history-log');
+
+            let isAutoMode = false;
+            let lastPrediction = null;
+
+            // Icons for different states
+            const icons = {
+                dry: `<svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`,
+                normal: `<svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`,
+                wet: `<svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l1.414 1.414M11.586 5.586L13 7M5.586 11.586L7 13m10.414-7.414L19 7m-1.414 4.586L19 13m-3-10a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`,
+                watering: `<svg class="w-8 h-8 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4a8 8 0 100 16 8 8 0 000-16z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4v16"></path><path d="M16 8a4 4 0 10-8 0"></path></svg>`,
+                camera: `<svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>`
+            };
+            
+            // UI Update Functions
+            const updateStatusUI = (status, confidence) => {
+                const statusInfo = {
+                    'Dry': { textClass: 'text-yellow-600', bgClass: 'bg-yellow-100', icon: icons.dry },
+                    'Normal': { textClass: 'text-green-600', bgClass: 'bg-green-100', icon: icons.normal },
+                    'Wet': { textClass: 'text-blue-600', bgClass: 'bg-blue-100', icon: icons.wet }
+                };
+                
+                const info = statusInfo[status];
+
+                statusText.textContent = status;
+                statusText.className = `text-3xl font-bold transition-colors duration-300 ${info.textClass}`;
+                statusIconBg.className = `w-16 h-16 rounded-full flex items-center justify-center transition-colors duration-300 ${info.bgClass}`;
+                statusIconContainer.innerHTML = info.icon;
+                confidenceText.textContent = `Confidence: ${(confidence * 100).toFixed(1)}%`;
+                lastUpdated.textContent = new Date().toLocaleTimeString();
+            };
+
+            const addHistoryLog = (message, icon) => {
+                // Remove placeholder if it exists
+                if (historyLog.querySelector('.text-center')) {
+                    historyLog.innerHTML = '';
+                }
+
+                const logEntry = document.createElement('div');
+                logEntry.className = 'flex items-start gap-3 p-3 bg-gray-50 rounded-lg';
+                logEntry.innerHTML = `
+                    <div class="w-6 h-6 flex-shrink-0">${icon}</div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-700">${message}</p>
+                        <p class="text-xs text-gray-400">${new Date().toLocaleString()}</p>
+                    </div>
+                `;
+                historyLog.prepend(logEntry);
+            };
+
+            const updateWateringStatus = (isWatering, reason = "Manual") => {
+                 if(isWatering) {
+                    wateringStatusDot.classList.remove('bg-gray-400');
+                    wateringStatusDot.classList.add('bg-blue-500', 'animate-pulse');
+                    wateringStatusText.textContent = "Watering Active...";
+                    addHistoryLog(`<strong>Watering started.</strong> (${reason})`, icons.watering);
+                 } else {
+                    wateringStatusDot.classList.remove('bg-blue-500', 'animate-pulse');
+                    wateringStatusDot.classList.add('bg-gray-400');
+                    wateringStatusText.textContent = "System Idle";
+                 }
+            };
+            
+            // Event Listeners
+            takePhotoButton.addEventListener('click', () => {
+                // Simulate requesting an image from ESP32
+                takePhotoBtnText.classList.add('hidden');
+                photoLoadingSpinner.classList.remove('hidden');
+                takePhotoButton.disabled = true;
+                predictButton.disabled = true;
+
+                addHistoryLog("Requesting photo from ESP32...", icons.camera)
+
+                setTimeout(() => {
+                    // In a real app, you would fetch the image URL from your ESP32's IP address.
+                    // For this demo, we'll use a placeholder.
+                    const randomSoilImage = `https://placehold.co/400x400/8B4513/FFFFFF?text=Soil+Sample`;
+                    
+                    imagePreview.src = randomSoilImage;
+                    imagePreview.classList.remove('hidden');
+                    imagePlaceholderText.classList.add('hidden');
+                    
+                    // Re-enable buttons
+                    takePhotoBtnText.classList.remove('hidden');
+                    photoLoadingSpinner.classList.add('hidden');
+                    takePhotoButton.disabled = false;
+                    predictButton.disabled = false;
+
+                    addHistoryLog("Photo received successfully.", icons.normal)
+
+                }, 2500); // Simulate a 2.5 second network delay
+            });
+
+            predictButton.addEventListener('click', () => {
+                // Simulate model prediction
+                predictBtnText.classList.add('hidden');
+                loadingSpinner.classList.remove('hidden');
+                predictButton.disabled = true;
+                takePhotoButton.disabled = true;
+
+
+                setTimeout(() => {
+                    const predictions = [
+                        { label: 'Dry', confidence: Math.random() * 0.2 + 0.8 }, // 80-100%
+                        { label: 'Normal', confidence: Math.random() * 0.2 + 0.75 }, // 75-95%
+                        { label: 'Wet', confidence: Math.random() * 0.25 + 0.70 }  // 70-95%
+                    ];
+                    lastPrediction = predictions[Math.floor(Math.random() * predictions.length)];
+                    
+                    updateStatusUI(lastPrediction.label, lastPrediction.confidence);
+                    addHistoryLog(`Soil analysis complete. Result: <strong>${lastPrediction.label}</strong>.`, icons[lastPrediction.label.toLowerCase()]);
+                    
+                    // Reset button
+                    predictBtnText.classList.remove('hidden');
+                    loadingSpinner.classList.add('hidden');
+                    predictButton.disabled = false;
+                    takePhotoButton.disabled = false;
+
+
+                    // Trigger auto-watering check
+                    if (isAutoMode && lastPrediction.label === 'Dry') {
+                        startWatering("Auto-mode triggered");
+                    }
+
+                }, 2000); // Simulate 2-second prediction time
+            });
+            
+            const startWatering = (reason) => {
+                updateWateringStatus(true, reason);
+                setTimeout(() => {
+                     updateWateringStatus(false);
+                     addHistoryLog("Watering finished.", icons.normal);
+                }, 4000); // Simulate 4 seconds of watering
+            }
+
+            manualWaterButton.addEventListener('click', () => {
+                startWatering("Manual override");
+            });
+
+            autoModeToggle.addEventListener('click', () => {
+                isAutoMode = !isAutoMode;
+                const toggleCircle = autoModeToggle.querySelector('span');
+                if (isAutoMode) {
+                    autoModeToggle.classList.remove('bg-gray-200');
+                    autoModeToggle.classList.add('bg-blue-500');
+                    toggleCircle.style.transform = 'translateX(1.25rem)';
+                    addHistoryLog("Auto-watering mode <strong>Enabled</strong>.", `<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>`);
+                } else {
+                    autoModeToggle.classList.remove('bg-blue-500');
+                    autoModeToggle.classList.add('bg-gray-200');
+                    toggleCircle.style.transform = 'translateX(0.25rem)';
+                     addHistoryLog("Auto-watering mode <strong>Disabled</strong>.", `<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>`);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
